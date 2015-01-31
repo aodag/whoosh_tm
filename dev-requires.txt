@@ -1,4 +1,4 @@
 -f wheelhouse
 --no-index
 -r requirements.txt
--e .
+-e .[testing]

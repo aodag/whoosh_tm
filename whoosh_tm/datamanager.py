@@ -13,6 +13,9 @@ class WhooshDataManager(object):
         self.writer = None
         self.documents = []
 
+    def add_document(self, **fields):
+        self.documents.append(fields)
+
     def abort(self, transaction):
         pass
 
