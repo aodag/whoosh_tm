@@ -1,4 +1,6 @@
 import unittest
+from unittest import mock
+from zope.interface.verify import verifyObject
 
 
 class TestWhooshDataManager(unittest.TestCase):
@@ -11,5 +13,8 @@ class TestWhooshDataManager(unittest.TestCase):
         return self._get_target()(*args, **kwargs)
 
     def test_it(self):
-        target = self._make_one()
+        from transaction.interfaces import IDataManager
+        index = mock.Mock()
+        target = self._make_one(index)
         self.assertIsNotNone(target)
+        verifyObject(IDataManager, target)
