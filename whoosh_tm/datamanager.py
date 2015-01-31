@@ -1,6 +1,10 @@
+import threading
 from transaction.interfaces import IDataManager
 from zope.interface import implementer
-from whoosh.writing import BufferedWriter
+# from whoosh.writing import BufferedWriter
+
+
+lock = threading.Lock()
 
 
 @implementer(IDataManager)
@@ -13,6 +17,13 @@ class WhooshDataManager(object):
         self.writer = None
         self.documents = []
 
+    def reset(self):
+        self.documents = []
+        if self.writer is not None:
+            self.writer.cancel()
+            self.writer = None
+        lock.release()
+
     def add_document(self, **fields):
         self.documents.append(fields)
 
@@ -20,13 +31,11 @@ class WhooshDataManager(object):
         pass
 
     def tpc_abort(self, transaction):
-        self.documents = []
-        if self.writer is not None:
-            self.writer.cancel()
-            self.writer = None
+        self.reset()
 
     def tpc_begin(self, transaction):
-        self.writer = BufferedWriter(self.index)
+        lock.acquire()
+        self.writer = self.index.writer()
 
     def commit(self, transaction):
         for document in self.documents:
@@ -37,7 +46,8 @@ class WhooshDataManager(object):
 
     def tpc_finish(self, transaction):
         self.writer.commit()
-        self.writer.close()
+        self.writer = None
+        self.reset()
 
     def sortKey(self):
         return self.__class__.__name__
